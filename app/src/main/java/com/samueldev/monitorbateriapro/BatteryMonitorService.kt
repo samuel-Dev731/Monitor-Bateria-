@@ -48,6 +48,7 @@ class BatteryMonitorService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun updateNotification() {
+        BatteryWidgetUpdater.updateAll(this)
         val batteryIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val manager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         val level = batteryIntent?.let {
