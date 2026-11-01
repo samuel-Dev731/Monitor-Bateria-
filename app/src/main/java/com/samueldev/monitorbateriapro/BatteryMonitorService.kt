@@ -11,6 +11,7 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import java.util.Locale
 
@@ -20,6 +21,7 @@ class BatteryMonitorService : Service() {
     private var lastLevel: Int? = null
     private var lastLevelChangeAt = 0L
     private var lastRatePerHour: Double? = null
+    private var wakeLock: PowerManager.WakeLock? = null
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
     private val updateTask = object : Runnable {
         override fun run() {
@@ -32,6 +34,11 @@ class BatteryMonitorService : Service() {
         super.onCreate()
         createNotificationChannel()
         startForeground(notificationId, buildNotification())
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "$packageName:BatteryMonitor").apply {
+            setReferenceCounted(false)
+            acquire()
+        }
         handler.post(updateTask)
     }
 
@@ -42,6 +49,8 @@ class BatteryMonitorService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(updateTask)
+        wakeLock?.let { if (it.isHeld) it.release() }
+        wakeLock = null
         super.onDestroy()
     }
 
