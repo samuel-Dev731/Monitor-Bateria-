@@ -8,7 +8,7 @@ android {
     compileSdk = 36
     defaultConfig {
         applicationId = "com.samueldev.monitorbateriapro"
-        minSdk = 23
+        minSdk = 24
         targetSdk = 35
         versionCode = 5
         versionName = "1.1.5"
