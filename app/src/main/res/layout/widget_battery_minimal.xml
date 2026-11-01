@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="horizontal" android:gravity="center_vertical"
+    android:padding="12dp" android:background="@drawable/widget_background">
+    <TextView android:text="🔋" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:textSize="22sp" />
+    <TextView android:id="@+id/widget_percent" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:text="--%" android:textColor="#45E58B"
+        android:textSize="25sp" android:textStyle="bold" android:layout_marginStart="8dp" />
+    <TextView android:id="@+id/widget_status" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:text="Bateria" android:textColor="#F3F7F5"
+        android:textSize="10sp" android:layout_marginStart="8dp" />
+</LinearLayout>
