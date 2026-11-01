@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_circle_description">Widget circular com porcentagem da bateria</string>
+    <string name="widget_classic_description">Widget clássico com nível e barra de bateria</string>
+    <string name="widget_minimal_description">Widget minimalista com porcentagem da bateria</string>
+</resources>
