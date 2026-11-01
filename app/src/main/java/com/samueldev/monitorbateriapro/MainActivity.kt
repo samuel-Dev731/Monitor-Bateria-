@@ -75,7 +75,7 @@ class MainActivity : ComponentActivity() {
                 while (true) {
                     val intent = registerReceiver(null, filter)
                     readings = readBattery(this@MainActivity, intent)
-                    delay(2000)
+                    delay(1000)
                 }
             }
             BatteryDashboard(readings)
@@ -138,11 +138,9 @@ private fun BatteryDashboard(data: BatteryReadings) {
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text("MONITOR DE BATERIA", color = White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.5.sp)
-                        Text("PRO  •  PAINEL EM TEMPO REAL", color = Muted, fontSize = 9.sp, letterSpacing = 1.2.sp)
                     }
                     Box(Modifier.size(9.dp).clip(CircleShape).background(Accent))
                     Spacer(Modifier.width(6.dp))
-                    Text("AO VIVO", color = Accent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
                 Column(
                     Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
@@ -192,11 +190,6 @@ private fun BatteryDashboard(data: BatteryReadings) {
                     InfoRow("Conexão", data.source)
                     InfoRow("Condição", data.health)
                     Spacer(Modifier.height(16.dp))
-                    Text(
-                        "As medições dependem dos sensores e do suporte do aparelho. O app não estima saúde ou autonomia sem dados confiáveis.",
-                        color = Muted, fontSize = 11.sp, lineHeight = 16.sp,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
-                    )
                     Spacer(Modifier.height(20.dp))
                 }
                 Row(
