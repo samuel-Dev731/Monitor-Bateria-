@@ -24,7 +24,7 @@ class BatteryMonitorService : Service() {
     private val updateTask = object : Runnable {
         override fun run() {
             updateNotification()
-            handler.postDelayed(this, 2_000L)
+            handler.postDelayed(this, 1_000L)
         }
     }
 
