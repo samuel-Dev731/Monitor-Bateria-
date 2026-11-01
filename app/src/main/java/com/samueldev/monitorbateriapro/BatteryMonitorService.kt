@@ -19,6 +19,7 @@ class BatteryMonitorService : Service() {
     private val channelId = "battery_monitor_live"
     private val notificationId = 105
     private var lastLevel: Int? = null
+    private var thresholdAlertSent = false
     private var lastLevelChangeAt = 0L
     private var lastRatePerHour: Double? = null
     private var wakeLock: PowerManager.WakeLock? = null
@@ -71,6 +72,16 @@ class BatteryMonitorService : Service() {
         val chargeMah = chargeUah.takeIf { it != Int.MIN_VALUE && it >= 0 }?.div(1000)
         val voltageMv = batteryIntent?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1)?.takeIf { it > 0 }
 
+        val status = batteryIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
+        val threshold = getSharedPreferences("battery_alerts", Context.MODE_PRIVATE).getInt("threshold", 20).coerceIn(5, 95)
+        if (status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL || (level != null && level > threshold)) {
+            thresholdAlertSent = false
+        }
+        if (!thresholdAlertSent && level != null && level <= threshold && status == BatteryManager.BATTERY_STATUS_DISCHARGING && lastLevel != null && lastLevel!! > threshold) {
+            vibrateForBatteryAlert()
+            thresholdAlertSent = true
+        }
+
         val now = System.currentTimeMillis()
         if (level != null) {
             val previous = lastLevel
@@ -95,6 +106,21 @@ class BatteryMonitorService : Service() {
         )
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(notificationId, buildNotification(lines))
+    }
+
+    private fun vibrateForBatteryAlert() {
+        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as android.os.VibratorManager).defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(android.os.VibrationEffect.createOneShot(650L, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(650L)
+        }
     }
 
     private fun buildNotification(lines: List<String> = listOf("Obtendo medições da bateria…")): Notification {
