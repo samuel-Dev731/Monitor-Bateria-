@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
         else startService(intent)
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 1001 && grantResults.firstOrNull() == android.content.pm.PackageManager.PERMISSION_GRANTED) {
             startBatteryMonitorService()
