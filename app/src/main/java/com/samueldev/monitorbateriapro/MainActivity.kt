@@ -71,6 +71,7 @@ class MainActivity : ComponentActivity() {
         startBatteryMonitorWhenAllowed()
         setContent {
             var readings by remember { mutableStateOf(BatteryReadings()) }
+            var showWidgetHelp by remember { mutableStateOf(false) }
             LaunchedEffect(Unit) {
                 while (true) {
                     val intent = registerReceiver(null, filter)
@@ -78,7 +79,27 @@ class MainActivity : ComponentActivity() {
                     delay(1000)
                 }
             }
-            BatteryDashboard(readings)
+            BatteryDashboard(readings, onOpenWidgets = { showWidgetHelp = true })
+            if (showWidgetHelp) {
+                AlertDialog(
+                    onDismissRequest = { showWidgetHelp = false },
+                    title = { Text("Central de Widgets") },
+                    text = {
+                        Column {
+                            Text("Escolha um dos três estilos de widget:")
+                            Spacer(Modifier.height(8.dp))
+                            Text("• Circular: porcentagem em destaque")
+                            Text("• Clássico: porcentagem e barra de nível")
+                            Text("• Minimalista: formato compacto")
+                            Spacer(Modifier.height(10.dp))
+                            Text("Para adicionar: pressione e segure um espaço vazio na tela inicial do celular, toque em Widgets, procure Monitor de Bateria Pro e arraste o modelo desejado para a tela.")
+                            Spacer(Modifier.height(8.dp))
+                            Text("Os widgets mostram a bateria deste celular. Com o monitoramento ativo, são atualizados junto das medições a cada segundo.")
+                        }
+                    },
+                    confirmButton = { TextButton(onClick = { showWidgetHelp = false }) { Text("Entendi") } }
+                )
+            }
         }
     }
 }
@@ -121,7 +142,7 @@ private fun readBattery(context: Context, intent: Intent?): BatteryReadings {
 }
 
 @Composable
-private fun BatteryDashboard(data: BatteryReadings) {
+private fun BatteryDashboard(data: BatteryReadings, onOpenWidgets: () -> Unit) {
     MaterialTheme(colorScheme = darkColorScheme(
         background = Background, surface = SurfaceCard, primary = Accent,
         onBackground = White, onSurface = White
@@ -138,6 +159,10 @@ private fun BatteryDashboard(data: BatteryReadings) {
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text("MONITOR DE BATERIA", color = White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.5.sp)
+                        Text("PRO • 1.0.5", color = Muted, fontSize = 9.sp, letterSpacing = 1.sp)
+                    }
+                    TextButton(onClick = onOpenWidgets, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
+                        Text("Widgets", color = Accent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                     Box(Modifier.size(9.dp).clip(CircleShape).background(Accent))
                     Spacer(Modifier.width(6.dp))
@@ -167,7 +192,7 @@ private fun BatteryDashboard(data: BatteryReadings) {
                         }
                     }
                     Spacer(Modifier.height(20.dp))
-                    SectionHeader("MEDIÇÕES EM TEMPO REAL", "Atualização a cada 2 segundos")
+                    SectionHeader("MEDIÇÕES EM TEMPO REAL", "Atualização a cada 1 segundo")
                     Spacer(Modifier.height(10.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         MetricTile("Corrente", data.currentMa?.let { "$it mA" } ?: "Indisponível", "↯", Modifier.weight(1f))
