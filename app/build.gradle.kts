@@ -5,7 +5,7 @@ plugins {
 }
 android {
     namespace = "com.samueldev.monitorbateriapro"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.samueldev.monitorbateriapro"
         minSdk = 23
