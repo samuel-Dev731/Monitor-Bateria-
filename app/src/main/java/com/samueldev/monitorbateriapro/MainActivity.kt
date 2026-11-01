@@ -42,9 +42,33 @@ private data class BatteryReadings(
 )
 
 class MainActivity : ComponentActivity() {
+    private fun startBatteryMonitorWhenAllowed() {
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1001)
+        } else {
+            startBatteryMonitorService()
+        }
+    }
+
+    private fun startBatteryMonitorService() {
+        val intent = Intent(this, BatteryMonitorService::class.java)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) startForegroundService(intent)
+        else startService(intent)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1001 && grantResults.firstOrNull() == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            startBatteryMonitorService()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        startBatteryMonitorWhenAllowed()
         setContent {
             var readings by remember { mutableStateOf(BatteryReadings()) }
             LaunchedEffect(Unit) {
