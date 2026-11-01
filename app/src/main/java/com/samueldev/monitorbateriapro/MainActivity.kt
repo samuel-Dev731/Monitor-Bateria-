@@ -72,6 +72,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             var readings by remember { mutableStateOf(BatteryReadings()) }
             var showWidgetHelp by remember { mutableStateOf(false) }
+            var alertThreshold by remember { mutableIntStateOf(getSharedPreferences("battery_alerts", MODE_PRIVATE).getInt("threshold", 20).coerceIn(5, 95)) }
             LaunchedEffect(Unit) {
                 while (true) {
                     val intent = registerReceiver(null, filter)
@@ -79,7 +80,10 @@ class MainActivity : ComponentActivity() {
                     delay(1000)
                 }
             }
-            BatteryDashboard(readings, onOpenWidgets = { showWidgetHelp = true })
+            BatteryDashboard(readings, alertThreshold, onThresholdChange = { value ->
+                alertThreshold = value
+                getSharedPreferences("battery_alerts", MODE_PRIVATE).edit().putInt("threshold", value).apply()
+            }, onOpenWidgets = { showWidgetHelp = true })
             if (showWidgetHelp) {
                 AlertDialog(
                     onDismissRequest = { showWidgetHelp = false },
@@ -142,7 +146,7 @@ private fun readBattery(context: Context, intent: Intent?): BatteryReadings {
 }
 
 @Composable
-private fun BatteryDashboard(data: BatteryReadings, onOpenWidgets: () -> Unit) {
+private fun BatteryDashboard(data: BatteryReadings, alertThreshold: Int, onThresholdChange: (Int) -> Unit, onOpenWidgets: () -> Unit) {
     MaterialTheme(colorScheme = darkColorScheme(
         background = Background, surface = SurfaceCard, primary = Accent,
         onBackground = White, onSurface = White
@@ -180,8 +184,12 @@ private fun BatteryDashboard(data: BatteryReadings, onOpenWidgets: () -> Unit) {
                         Column(Modifier.fillMaxWidth().padding(vertical = 22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("NÍVEL DA BATERIA", color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
                             Spacer(Modifier.height(16.dp))
-                            BatteryGauge(data.level, data.status)
-                            Spacer(Modifier.height(16.dp))
+                            BatteryGauge(data.level, data.status, alertThreshold)
+                            Spacer(Modifier.height(12.dp))
+                            Text("Alerta vibratório: ${alertThreshold}%", color = White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                            Slider(value = alertThreshold.toFloat(), onValueChange = { onThresholdChange(it.toInt()) }, valueRange = 5f..95f, steps = 17, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp))
+                            Text("O celular vibra uma vez quando a bateria estiver descarregando e atingir esse limite.", color = Muted, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 24.dp))
+                            Spacer(Modifier.height(12.dp))
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(Modifier.clip(CircleShape).background(Color(0xFF1D3C2D)).padding(horizontal = 12.dp, vertical = 7.dp)) {
                                     Text(data.status.uppercase(Locale.getDefault()), color = Accent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -232,12 +240,18 @@ private fun BatteryDashboard(data: BatteryReadings, onOpenWidgets: () -> Unit) {
 }
 
 @Composable
-private fun BatteryGauge(level: Int, status: String) {
+private fun BatteryGauge(level: Int, status: String, alertThreshold: Int) {
     Box(Modifier.size(206.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
             val stroke = 13.dp.toPx()
             drawArc(Color(0xFF29363D), -90f, 360f, false, style = androidx.compose.ui.graphics.drawscope.Stroke(stroke, cap = StrokeCap.Round))
             drawArc(Accent, -90f, 360f * level.coerceIn(0, 100) / 100f, false, style = androidx.compose.ui.graphics.drawscope.Stroke(stroke, cap = StrokeCap.Round))
+            val angle = Math.toRadians((alertThreshold * 3.6 - 90.0))
+            val radius = size.minDimension / 2f
+            val markerRadius = radius - stroke / 2f
+            val marker = Offset(size.width / 2f + kotlin.math.cos(angle).toFloat() * markerRadius, size.height / 2f + kotlin.math.sin(angle).toFloat() * markerRadius)
+            drawCircle(Color(0xFFFFC857), radius = 7.dp.toPx(), center = marker)
+            drawCircle(Color(0xFF090F14), radius = 3.dp.toPx(), center = marker)
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text("🔋", fontSize = 29.sp)
