@@ -21,11 +21,18 @@ jobs:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;28.2.13676358 cmake;3.22.1'
       - name: Install .NET Android workload
         run: dotnet workload install android
-      - name: Publish C# NativeAOT library for ARM64
+      - name: Configure Android NDK for NativeAOT
         run: |
-          dotnet publish dotnet/MonitorCore/MonitorCore.csproj -c Release -r android-arm64 -p:PublishAot=true -p:NativeLib=Shared -o artifacts/dotnet/arm64
+          NDK_BIN="$ANDROID_HOME/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          test -x "$NDK_BIN/clang"
+          echo "$NDK_BIN" >> "$GITHUB_PATH"
+      - name: Publish C# NativeAOT shared library for Android ARM64
+        run: |
+          dotnet publish dotnet/MonitorCore/MonitorCore.csproj -c Release -r linux-bionic-arm64 -p:PublishAot=true -p:NativeLib=Shared -p:DisableUnsupportedError=true -p:PublishAotUsingRuntimePack=true -o artifacts/dotnet/arm64
           DOTNET_LIB="$(find artifacts/dotnet/arm64 -type f -name '*.so' | head -n 1)"
           test -n "$DOTNET_LIB" && test -s "$DOTNET_LIB"
+          llvm-readelf -h "$DOTNET_LIB" | grep -q 'AArch64'
+          llvm-nm -D --defined-only "$DOTNET_LIB" | grep -q 'monitor_cpu_percent'
           mkdir -p app/src/main/jniLibs/arm64-v8a
           cp "$DOTNET_LIB" app/src/main/jniLibs/arm64-v8a/libmonitorcore.so
       - uses: gradle/actions/setup-gradle@v6
