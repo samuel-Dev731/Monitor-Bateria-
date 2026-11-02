@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import android.provider.Settings
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -52,6 +54,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun openOverlaySettings() {
+        if (Settings.canDrawOverlays(this)) {
+            val intent = Intent(this, OverlayMonitorService::class.java)
+            if (android.os.Build.VERSION.SDK_INT >= 26) startForegroundService(intent) else startService(intent)
+        } else {
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+        }
+    }
+
     private fun startBatteryMonitorService() {
         val intent = Intent(this, BatteryMonitorService::class.java)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) startForegroundService(intent)
@@ -84,7 +95,7 @@ class MainActivity : ComponentActivity() {
             BatteryDashboard(readings, alertThreshold, onThresholdChange = { value ->
                 alertThreshold = value
                 getSharedPreferences("battery_alerts", MODE_PRIVATE).edit().putInt("threshold", value).apply()
-            }, onOpenWidgets = { showWidgetHelp = true }, onOpenWifi = { startActivity(Intent(this@MainActivity, WifiScanActivity::class.java)) })
+            }, onOpenWidgets = { showWidgetHelp = true }, onOpenWifi = { startActivity(Intent(this@MainActivity, WifiScanActivity::class.java)) }, onOpenOverlay = { openOverlaySettings() })
             if (showWidgetHelp) {
                 AlertDialog(
                     onDismissRequest = { showWidgetHelp = false },
@@ -147,7 +158,7 @@ private fun readBattery(context: Context, intent: Intent?): BatteryReadings {
 }
 
 @Composable
-private fun BatteryDashboard(data: BatteryReadings, alertThreshold: Int, onThresholdChange: (Int) -> Unit, onOpenWidgets: () -> Unit, onOpenWifi: () -> Unit) {
+private fun BatteryDashboard(data: BatteryReadings, alertThreshold: Int, onThresholdChange: (Int) -> Unit, onOpenWidgets: () -> Unit, onOpenWifi: () -> Unit, onOpenOverlay: () -> Unit) {
     MaterialTheme(colorScheme = darkColorScheme(
         background = Background, surface = SurfaceCard, primary = Accent,
         onBackground = White, onSurface = White
@@ -202,6 +213,8 @@ private fun BatteryDashboard(data: BatteryReadings, alertThreshold: Int, onThres
                     }
                     Spacer(Modifier.height(14.dp))
                     OutlinedButton(onClick = onOpenWifi, modifier = Modifier.fillMaxWidth()) { Text("Procurar redes Wi-Fi próximas") }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(onClick = onOpenOverlay, modifier = Modifier.fillMaxWidth()) { Text("Central de monitoramento flutuante") }
                     Spacer(Modifier.height(20.dp))
                     SectionHeader("MEDIÇÕES EM TEMPO REAL", "Atualização a cada 1 segundo")
                     Spacer(Modifier.height(10.dp))
