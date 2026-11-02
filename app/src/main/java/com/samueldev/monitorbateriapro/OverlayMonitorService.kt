@@ -9,6 +9,7 @@ import android.os.*
 import android.provider.Settings
 import android.view.*
 import android.widget.TextView
+import androidx.core.app.NotificationCompat
 import java.io.File
 
 class OverlayMonitorService : Service() {
@@ -32,7 +33,7 @@ class OverlayMonitorService : Service() {
             (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(channel)
         }
         val open = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        val notification = Notification.Builder(this, "overlay_monitor")
+        val notification = NotificationCompat.Builder(this, "overlay_monitor")
             .setSmallIcon(R.drawable.ic_battery_notification).setContentTitle("Monitor de Bateria Pro")
             .setContentText("Painel flutuante ativo").setContentIntent(open).setOngoing(true).build()
         startForeground(106, notification)
