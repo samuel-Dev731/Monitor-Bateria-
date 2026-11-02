@@ -19,6 +19,8 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;28.2.13676358 cmake;3.22.1'
+      - name: Install .NET Android workload
+        run: dotnet workload install android
       - name: Install NativeAOT build dependencies
         run: sudo apt-get update && sudo apt-get install -y clang llvm lld zlib1g-dev
       - name: Publish C# NativeAOT libraries for Android
