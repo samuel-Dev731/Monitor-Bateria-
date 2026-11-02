@@ -10,15 +10,13 @@ import android.provider.Settings
 import android.view.*
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
-import java.io.File
 
 class OverlayMonitorService : Service() {
     private lateinit var wm: WindowManager
     private var panel: TextView? = null
     private var expanded = false
     private val handler = Handler(Looper.getMainLooper())
-    private var oldTotal = 0L
-    private var oldIdle = 0L
+    private var previousCounters: LongArray? = null
     private var oldProc = Process.getElapsedCpuTime()
     private var oldTime = SystemClock.elapsedRealtime()
     private val tick = object : Runnable {
@@ -69,29 +67,46 @@ class OverlayMonitorService : Service() {
     }
 
     private fun refresh() {
-        val v=panel ?: return
-        var total=0L; var idle=0L
-        try {
-            val p=File("/proc/stat").bufferedReader().use { it.readLine().trim().split(Regex("\\s+")) }
-            val nums=p.drop(1).map { it.toLong() }; total=nums.sum(); idle=nums.getOrElse(3){0L}+nums.getOrElse(4){0L}
-        } catch (_: Exception) {}
-        val now=SystemClock.elapsedRealtime(); val proc=Process.getElapsedCpuTime()
-        val dt=(now-oldTime).coerceAtLeast(1L); val dTotal=total-oldTotal; val dIdle=idle-oldIdle
-        val cpu=if(oldTotal>0 && dTotal>0) ((dTotal-dIdle)*100.0/dTotal).coerceIn(0.0,100.0) else null
-        val procPct=(((proc-oldProc).toDouble()/dt)*100.0).coerceIn(0.0,100.0)
-        val bm=getSystemService(BATTERY_SERVICE) as BatteryManager
-        val ma=bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW).takeIf { it!=Int.MIN_VALUE }?.div(1000)
-        val lines= mutableListOf("MONITOR PRO • "+(if(expanded) "COMPLETO" else "MINI"), "Bateria: "+(ma?.toString()?.plus(" mA") ?: "N/D"))
-        lines.add("CPU total: "+(cpu?.let { "%.0f%%".format(it) } ?: "N/D"))
-        if(expanded) {
+        val v = panel ?: return
+        val counters = try { NativeCpuMonitor.readCounters() } catch (_: UnsatisfiedLinkError) { null }
+        val previous = previousCounters
+        var totalCpu: Double? = null
+        val coreValues = mutableListOf<Double>()
+        if (counters != null && previous != null && counters.size == previous.size && counters.size >= 2) {
+            fun usage(index: Int): Double? {
+                val base = index * 2
+                val totalDelta = counters[base] - previous[base]
+                val idleDelta = counters[base + 1] - previous[base + 1]
+                if (totalDelta <= 0L || idleDelta < 0L || idleDelta > totalDelta) return null
+                return ((totalDelta - idleDelta) * 100.0 / totalDelta).coerceIn(0.0, 100.0)
+            }
+            totalCpu = usage(0)
+            for (index in 1 until counters.size / 2) usage(index)?.let { coreValues.add(it) }
+        }
+        previousCounters = counters
+        val now = SystemClock.elapsedRealtime()
+        val proc = Process.getElapsedCpuTime()
+        val dt = (now - oldTime).coerceAtLeast(1L)
+        val procPct = (((proc - oldProc).toDouble() / dt) * 100.0).coerceIn(0.0, 100.0)
+        val bm = getSystemService(BATTERY_SERVICE) as BatteryManager
+        val ma = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+            .takeIf { it != Int.MIN_VALUE }?.div(1000)
+        val lines = mutableListOf(
+            "MONITOR PRO • " + if (expanded) "COMPLETO" else "MINI",
+            "Bateria: " + (ma?.toString()?.plus(" mA") ?: "N/D"),
+            "CPU total: " + (totalCpu?.let { "%.1f%%".format(it) } ?: "Aguardando leitura")
+        )
+        if (expanded) {
             lines.add("CPU deste app: %.1f%%".format(procPct))
-            lines.add("Núcleos: leitura detalhada indisponível nesta versão")
-            lines.add("GPU total: indisponível no Android deste aparelho")
+            lines.add("Núcleos lógicos: " + if (coreValues.isEmpty()) "N/D" else coreValues.size.toString())
+            coreValues.forEachIndexed { index, value -> lines.add("CPU " + (index + 1) + ": %.1f%%".format(value)) }
+            lines.add("GPU total: indisponível pelo driver/API")
             lines.add("GPU deste app: indisponível")
             lines.add("Toque para modo compacto")
         } else lines.add("Toque para detalhes")
-        v.text=lines.joinToString("\n")
-        oldTotal=total; oldIdle=idle; oldProc=proc; oldTime=now
+        v.text = lines.joinToString("\n")
+        oldProc = proc
+        oldTime = now
     }
 
     override fun onDestroy() {
