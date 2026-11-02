@@ -31,3 +31,26 @@ public static class CpuMath
         return Math.Max(0.0, Math.Min(100.0, percent));
     }
 }
+
+/// <summary>Native ABI entry point consumed by the Android JNI bridge.</summary>
+public static class MonitorCoreNative
+{
+    [System.Runtime.InteropServices.UnmanagedCallersOnly(
+        EntryPoint = "monitor_cpu_percent",
+        CallConvs = new[] { typeof(System.Runtime.CompilerServices.CallConvCdecl) })]
+    public static double CalculatePercent(
+        ulong previousTotal, ulong previousIdle,
+        ulong currentTotal, ulong currentIdle)
+    {
+        if (currentTotal <= previousTotal || currentIdle < previousIdle)
+            return -1.0;
+
+        var totalDelta = currentTotal - previousTotal;
+        var idleDelta = currentIdle - previousIdle;
+        if (idleDelta > totalDelta || totalDelta == 0)
+            return -1.0;
+
+        return Math.Max(0.0, Math.Min(100.0,
+            (totalDelta - idleDelta) * 100.0 / totalDelta));
+    }
+}
