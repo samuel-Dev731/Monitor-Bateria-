@@ -1,3 +1,5 @@
+using System;
+
 namespace MonitorCore;
 
 /// <summary>Immutable CPU sample expressed as cumulative kernel tick counters.</summary>
@@ -25,6 +27,7 @@ public static class CpuMath
         var total = current.TotalTicks - previous.TotalTicks;
         var idle = current.IdleTicks - previous.IdleTicks;
         if (idle > total) return null;
-        return Math.Clamp((total - idle) * 100.0 / total, 0.0, 100.0);
+        var percent = (total - idle) * 100.0 / total;
+        return Math.Max(0.0, Math.Min(100.0, percent));
     }
 }
