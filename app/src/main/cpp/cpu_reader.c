@@ -1,6 +1,7 @@
 #include "cpu_reader.h"
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 int read_cpu_counters(CpuCounters *out, size_t capacity, size_t *count) {
     if (!out || !count || capacity == 0) return 0;
@@ -11,8 +12,10 @@ int read_cpu_counters(CpuCounters *out, size_t capacity, size_t *count) {
     while (fgets(line, sizeof(line), file) && used < capacity) {
         if (strncmp(line, "cpu", 3) != 0) break;
         if (line[3] != ' ' && (line[3] < '0' || line[3] > '9')) break;
+        char *cursor = line + 3;
+        while (isdigit((unsigned char)*cursor)) ++cursor;
         unsigned long long v[10] = {0};
-        int n = sscanf(line + 3, "%llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
+        int n = sscanf(cursor, "%llu %llu %llu %llu %llu %llu %llu %llu %llu %llu",
                        &v[0], &v[1], &v[2], &v[3], &v[4], &v[5], &v[6], &v[7], &v[8], &v[9]);
         if (n < 4) continue;
         unsigned long long total = 0;
