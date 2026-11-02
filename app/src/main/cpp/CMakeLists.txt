@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.22.1)
+project(monitor_cpu LANGUAGES C CXX)
+add_library(cpu_reader STATIC cpu_reader.c)
+target_include_directories(cpu_reader PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_library(monitor_native SHARED native_bridge.cpp)
+target_compile_features(monitor_native PRIVATE cxx_std_17)
+target_link_libraries(monitor_native PRIVATE cpu_reader)
