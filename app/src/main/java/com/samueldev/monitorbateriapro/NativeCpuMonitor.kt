@@ -9,5 +9,13 @@ internal object NativeCpuMonitor {
         System.loadLibrary("monitor_native")
     }
 
-    external fun readCounters(): LongArray?\n\n    /** Returns -1 when the bundled .NET NativeAOT library is unavailable. */\n    external fun calculateDotNetPercent(previousTotal: Long, previousIdle: Long, currentTotal: Long, currentIdle: Long): Double
+    external fun readCounters(): LongArray?
+
+    /** Returns -1 when the bundled .NET NativeAOT library is unavailable. */
+    external fun calculateDotNetPercent(
+        previousTotal: Long,
+        previousIdle: Long,
+        currentTotal: Long,
+        currentIdle: Long
+    ): Double
 }
