@@ -9,8 +9,8 @@ android {
         applicationId = "com.samueldev.monitorbateriapro"
         minSdk = 24
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.1.5"
+        versionCode = 6
+        versionName = "1.2.0"
     }
     buildFeatures { compose = true }
     compileOptions {
