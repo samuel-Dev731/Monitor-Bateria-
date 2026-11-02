@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0-android</TargetFramework>
+    <!-- This is a standalone Android Bionic native library, not an Android app. -->
+    <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -9,4 +10,7 @@
     <SelfContained>true</SelfContained>
     <StripSymbols>true</StripSymbols>
   </PropertyGroup>
+  <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('linux-bionic'))">
+    <LinkerArg Include="-Wl,--undefined-version" />
+  </ItemGroup>
 </Project>
