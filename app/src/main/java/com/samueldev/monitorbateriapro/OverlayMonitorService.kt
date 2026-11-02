@@ -80,7 +80,12 @@ class OverlayMonitorService : Service() {
                 if (totalDelta <= 0L || idleDelta < 0L || idleDelta > totalDelta) return null
                 return ((totalDelta - idleDelta) * 100.0 / totalDelta).coerceIn(0.0, 100.0)
             }
-            totalCpu = usage(0)
+            val dotnetPercent = try {
+                NativeCpuMonitor.calculateDotNetPercent(
+                    previous[0], previous[1], counters[0], counters[1]
+                )
+            } catch (_: UnsatisfiedLinkError) { -1.0 }
+            totalCpu = if (dotnetPercent in 0.0..100.0) dotnetPercent else usage(0)
             for (index in 1 until counters.size / 2) usage(index)?.let { coreValues.add(it) }
         }
         previousCounters = counters
