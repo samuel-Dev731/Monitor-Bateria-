@@ -83,7 +83,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             var readings by remember { mutableStateOf(BatteryReadings()) }
             var showWidgetHelp by remember { mutableStateOf(false) }
-            var showWifiHelp by remember { mutableStateOf(false) }
             var alertThreshold by remember { mutableIntStateOf(getSharedPreferences("battery_alerts", MODE_PRIVATE).getInt("threshold", 20).coerceIn(5, 95)) }
             LaunchedEffect(Unit) {
                 while (true) {
@@ -95,7 +94,7 @@ class MainActivity : ComponentActivity() {
             BatteryDashboard(readings, alertThreshold, onThresholdChange = { value ->
                 alertThreshold = value
                 getSharedPreferences("battery_alerts", MODE_PRIVATE).edit().putInt("threshold", value).apply()
-            }, onOpenWidgets = { showWidgetHelp = true }, onOpenWifi = { startActivity(Intent(this@MainActivity, WifiScanActivity::class.java)) }, onOpenOverlay = { openOverlaySettings() })
+            }, onOpenWidgets = { showWidgetHelp = true }, onOpenOverlay = { openOverlaySettings() })
             if (showWidgetHelp) {
                 AlertDialog(
                     onDismissRequest = { showWidgetHelp = false },
@@ -158,7 +157,7 @@ private fun readBattery(context: Context, intent: Intent?): BatteryReadings {
 }
 
 @Composable
-private fun BatteryDashboard(data: BatteryReadings, alertThreshold: Int, onThresholdChange: (Int) -> Unit, onOpenWidgets: () -> Unit, onOpenWifi: () -> Unit, onOpenOverlay: () -> Unit) {
+private fun BatteryDashboard(data: BatteryReadings, alertThreshold: Int, onThresholdChange: (Int) -> Unit, onOpenWidgets: () -> Unit, onOpenOverlay: () -> Unit) {
     MaterialTheme(colorScheme = darkColorScheme(
         background = Background, surface = SurfaceCard, primary = Accent,
         onBackground = White, onSurface = White
@@ -212,8 +211,6 @@ private fun BatteryDashboard(data: BatteryReadings, alertThreshold: Int, onThres
                         }
                     }
                     Spacer(Modifier.height(14.dp))
-                    OutlinedButton(onClick = onOpenWifi, modifier = Modifier.fillMaxWidth()) { Text("Procurar redes Wi-Fi próximas") }
-                    Spacer(Modifier.height(8.dp))
                     OutlinedButton(onClick = onOpenOverlay, modifier = Modifier.fillMaxWidth()) { Text("Central de monitoramento flutuante") }
                     Spacer(Modifier.height(20.dp))
                     SectionHeader("MEDIÇÕES EM TEMPO REAL", "Atualização a cada 1 segundo")
