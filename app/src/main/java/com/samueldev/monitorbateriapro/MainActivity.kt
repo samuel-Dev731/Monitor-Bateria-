@@ -175,7 +175,7 @@ private fun BatteryDashboard(data: BatteryReadings, alertThreshold: Int, onThres
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text("MONITOR DE BATERIA", color = White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.5.sp)
-                        Text("PRO • 1.1.0", color = Muted, fontSize = 9.sp, letterSpacing = 1.sp)
+                        Text("PRO • 1.2.5", color = Muted, fontSize = 9.sp, letterSpacing = 1.sp)
                     }
                     TextButton(onClick = onOpenWidgets, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
                         Text("Widgets", color = Accent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
