@@ -19,27 +19,25 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;28.2.13676358 cmake;3.22.1'
-      - name: Install .NET Android workload
-        run: dotnet workload install android
       - name: Install NativeAOT build dependencies
         run: sudo apt-get update && sudo apt-get install -y clang llvm lld zlib1g-dev
-      - name: Publish C# NativeAOT libraries for Android
+      - name: Publish C# NativeAOT library for Android arm64 (Bionic)
+        env:
+          ANDROID_NDK_ROOT: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
         run: |
-          dotnet publish dotnet/MonitorCore/MonitorCore.csproj -c Release -r android-arm64 -o artifacts/dotnet/arm64
-          dotnet publish dotnet/MonitorCore/MonitorCore.csproj -c Release -r android-arm -o artifacts/dotnet/arm
-          mkdir -p app/src/main/jniLibs/arm64-v8a app/src/main/jniLibs/armeabi-v7a
-          find artifacts/dotnet/arm64 -maxdepth 1 -type f -name 'libMonitorCore.so' -exec cp {} app/src/main/jniLibs/arm64-v8a/libmonitorcore.so \;
-          find artifacts/dotnet/arm -maxdepth 1 -type f -name 'libMonitorCore.so' -exec cp {} app/src/main/jniLibs/armeabi-v7a/libmonitorcore.so \;
-          test -s app/src/main/jniLibs/arm64-v8a/libmonitorcore.so
-          test -s app/src/main/jniLibs/armeabi-v7a/libmonitorcore.so
+          export PATH="$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
+          dotnet publish dotnet/MonitorCore/MonitorCore.csproj -c Release -r linux-bionic-arm64 -o artifacts/dotnet/arm64 -p:DisableUnsupportedError=true -p:PublishAotUsingRuntimePack=true
+          mkdir -p app/src/main/jniLibs/arm64-v8a
+          test -s artifacts/dotnet/arm64/libMonitorCore.so
+          cp artifacts/dotnet/arm64/libMonitorCore.so app/src/main/jniLibs/arm64-v8a/libmonitorcore.so
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: "9.7.0"
       - name: Build debug APK with C, C++ and C# NativeAOT
         run: gradle assembleDebug
-      - name: Verify .NET libraries are packaged in the APK
+      - name: Verify .NET library is packaged in the APK
         run: |
-          unzip -l app/build/outputs/apk/debug/app-debug.apk | grep -E 'lib/(arm64-v8a|armeabi-v7a)/libmonitorcore.so'
+          unzip -l app/build/outputs/apk/debug/app-debug.apk | grep 'lib/arm64-v8a/libmonitorcore.so'
       - uses: actions/upload-artifact@v6
         with:
           name: Monitor-Bateria-Pro-1.2.5-debug
