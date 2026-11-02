@@ -21,26 +21,25 @@ jobs:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;28.2.13676358 cmake;3.22.1'
       - name: Install .NET Android workload
         run: dotnet workload install android
-      - name: Publish C# NativeAOT libraries for both Android ABIs
+      - name: Publish C# NativeAOT library for ARM64
         run: |
-          dotnet publish dotnet/MonitorCore/MonitorCore.csproj -c Release -r linux-bionic-arm64 -p:PublishAot=true -p:NativeLib=Shared -o artifacts/dotnet/arm64
-          dotnet publish dotnet/MonitorCore/MonitorCore.csproj -c Release -r android-arm -p:PublishAot=true -p:NativeLib=Shared -o artifacts/dotnet/arm
-          mkdir -p app/src/main/jniLibs/arm64-v8a app/src/main/jniLibs/armeabi-v7a
-          ARM64_LIB="$(find artifacts/dotnet/arm64 -type f -name '*.so' | head -n 1)"
-          ARM_LIB="$(find artifacts/dotnet/arm -type f -name '*.so' | head -n 1)"
-          test -n "$ARM64_LIB" && test -s "$ARM64_LIB"
-          test -n "$ARM_LIB" && test -s "$ARM_LIB"
-          cp "$ARM64_LIB" app/src/main/jniLibs/arm64-v8a/libmonitorcore.so
-          cp "$ARM_LIB" app/src/main/jniLibs/armeabi-v7a/libmonitorcore.so
+          dotnet publish dotnet/MonitorCore/MonitorCore.csproj -c Release -r android-arm64 -p:PublishAot=true -p:NativeLib=Shared -o artifacts/dotnet/arm64
+          DOTNET_LIB="$(find artifacts/dotnet/arm64 -type f -name '*.so' | head -n 1)"
+          test -n "$DOTNET_LIB" && test -s "$DOTNET_LIB"
+          mkdir -p app/src/main/jniLibs/arm64-v8a
+          cp "$DOTNET_LIB" app/src/main/jniLibs/arm64-v8a/libmonitorcore.so
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: "9.7.0"
-      - name: Build debug APK with C, C++ and C# NativeAOT
+      - name: Build debug APK with native CPU fallback and ARM64 .NET
         run: gradle assembleDebug
-      - name: Verify .NET library is packaged in the APK
+      - name: Verify native libraries for both Android ABIs
         run: |
-          unzip -l app/build/outputs/apk/debug/app-debug.apk | grep -E 'lib/(arm64-v8a|armeabi-v7a)/libmonitorcore.so'
-          test "$(unzip -l app/build/outputs/apk/debug/app-debug.apk | grep -Ec 'lib/(arm64-v8a|armeabi-v7a)/libmonitorcore.so')" -eq 2
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          unzip -l "$APK" | grep -E 'lib/(arm64-v8a|armeabi-v7a)/libmonitor_native.so'
+          test "$(unzip -l "$APK" | grep -Ec 'lib/(arm64-v8a|armeabi-v7a)/libmonitor_native.so')" -eq 2
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libmonitorcore.so'
+          test "$(unzip -l "$APK" | grep -Ec 'lib/arm64-v8a/libmonitorcore.so')" -eq 1
       - uses: actions/upload-artifact@v6
         with:
           name: Monitor-Bateria-Pro-1.2.5-debug
