@@ -12,7 +12,7 @@ import java.util.Locale
 object BatteryWidgetExtrasUpdater {
     fun updateAll(context: Context) {
         val manager = AppWidgetManager.getInstance(context)
-        val battery = context.registerReceiver(null, IntentFilterCompat.batteryChanged())
+        val battery = context.registerReceiver(null, ExtrasIntentFilterCompat.batteryChanged())
         val temperatureTenths = battery?.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE)
             ?: Int.MIN_VALUE
         val temperature = if (temperatureTenths != Int.MIN_VALUE && temperatureTenths > 0) {
@@ -57,6 +57,6 @@ class BatteryWidgetScreenTime : AppWidgetProvider() {
     }
 }
 
-private object IntentFilterCompat {
+private object ExtrasIntentFilterCompat {
     fun batteryChanged() = android.content.IntentFilter(Intent.ACTION_BATTERY_CHANGED)
 }
