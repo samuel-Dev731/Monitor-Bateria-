@@ -78,6 +78,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        InstallReferrerTracker.collectOnce(this)
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         startBatteryMonitorWhenAllowed()
         setContent {
