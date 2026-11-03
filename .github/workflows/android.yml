@@ -1,7 +1,7 @@
 name: Build Android APK
 on:
   push:
-    branches: [ "main", "feature/floating-performance-monitor", "feature/1.2.5-native-dotnet-monitor" ]
+    branches: [ "main", "feature/floating-performance-monitor", "feature/1.3.0-native-dotnet-monitor" ]
   workflow_dispatch:
 jobs:
   build:
@@ -49,7 +49,7 @@ jobs:
           test "$(unzip -l "$APK" | grep -Ec 'lib/arm64-v8a/libmonitorcore.so')" -eq 1
       - uses: actions/upload-artifact@v6
         with:
-          name: Monitor-Bateria-Pro-1.2.5-debug
+          name: Monitor-Bateria-Pro-1.3.0-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
