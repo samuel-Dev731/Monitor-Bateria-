@@ -2,7 +2,6 @@ package com.samueldev.monitorbateriapro
 
 import android.content.Context
 import com.android.installreferrer.api.InstallReferrerClient
-import com.android.installreferrer.api.InstallReferrerResponse
 import com.android.installreferrer.api.InstallReferrerStateListener
 
 /**
@@ -20,7 +19,7 @@ internal object InstallReferrerTracker {
             client.startConnection(object : InstallReferrerStateListener {
                 override fun onInstallReferrerSetupFinished(responseCode: Int) {
                     try {
-                        if (responseCode == InstallReferrerResponse.OK) {
+                        if (responseCode == InstallReferrerClient.InstallReferrerResponse.OK) {
                             val details = client.installReferrer
                             prefs.edit()
                                 .putString("referrer_url", details.installReferrer)
