@@ -10,8 +10,8 @@ android {
         applicationId = "com.samueldev.monitorbateriapro"
         minSdk = 24
         targetSdk = 35
-        versionCode = 7
-        versionName = "1.2.5"
+        versionCode = 8
+        versionName = "1.3.0"
         externalNativeBuild { cmake { cppFlags += "-std=c++17" } }
     }
     buildFeatures { compose = true }
