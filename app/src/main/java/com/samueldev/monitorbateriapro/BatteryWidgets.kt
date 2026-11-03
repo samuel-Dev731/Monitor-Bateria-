@@ -16,6 +16,7 @@ object BatteryWidgetUpdater {
         update(context, BatteryWidgetCircle::class.java, R.layout.widget_battery_circle)
         update(context, BatteryWidgetClassic::class.java, R.layout.widget_battery_classic)
         update(context, BatteryWidgetMinimal::class.java, R.layout.widget_battery_minimal)
+        BatteryWidgetExtrasUpdater.updateAll(context)
     }
 
     private fun update(context: Context, provider: Class<out AppWidgetProvider>, layout: Int) {
