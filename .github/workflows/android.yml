@@ -1,7 +1,7 @@
 name: Build Android APK
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "feature/floating-performance-monitor", "feature/1.3.0-native-dotnet-monitor" ]
   workflow_dispatch:
 jobs:
   build:
@@ -12,14 +12,44 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+      - name: Install Android SDK, NDK and CMake
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;28.2.13676358 cmake;3.22.1'
+      - name: Install .NET Android workload
+        run: dotnet workload install android
+      - name: Configure Android NDK for NativeAOT
+        run: |
+          NDK_BIN="$ANDROID_HOME/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          test -x "$NDK_BIN/clang"
+          echo "$NDK_BIN" >> "$GITHUB_PATH"
+      - name: Publish C# NativeAOT shared library for Android ARM64
+        run: |
+          dotnet publish dotnet/MonitorCore/MonitorCore.csproj -c Release -r linux-bionic-arm64 -p:PublishAot=true -p:NativeLib=Shared -p:DisableUnsupportedError=true -p:PublishAotUsingRuntimePack=true -o artifacts/dotnet/arm64
+          DOTNET_LIB="$(find artifacts/dotnet/arm64 -type f -name '*.so' | head -n 1)"
+          test -n "$DOTNET_LIB" && test -s "$DOTNET_LIB"
+          llvm-readelf -h "$DOTNET_LIB" | grep -q 'AArch64'
+          llvm-nm -D --defined-only "$DOTNET_LIB" | grep -q 'monitor_cpu_percent'
+          mkdir -p app/src/main/jniLibs/arm64-v8a
+          cp "$DOTNET_LIB" app/src/main/jniLibs/arm64-v8a/libmonitorcore.so
       - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: "9.7.0"
-      - name: Build debug APK
+      - name: Build debug APK with native CPU fallback and ARM64 .NET
         run: gradle assembleDebug
+      - name: Verify native libraries for both Android ABIs
+        run: |
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          unzip -l "$APK" | grep -E 'lib/(arm64-v8a|armeabi-v7a)/libmonitor_native.so'
+          test "$(unzip -l "$APK" | grep -Ec 'lib/(arm64-v8a|armeabi-v7a)/libmonitor_native.so')" -eq 2
+          unzip -l "$APK" | grep 'lib/arm64-v8a/libmonitorcore.so'
+          test "$(unzip -l "$APK" | grep -Ec 'lib/arm64-v8a/libmonitorcore.so')" -eq 1
       - uses: actions/upload-artifact@v6
         with:
-          name: Monitor-Bateria-Pro-debug
+          name: Monitor-Bateria-Pro-1.3.0-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30

@@ -5,23 +5,24 @@ plugins {
 android {
     namespace = "com.samueldev.monitorbateriapro"
     compileSdk = 36
+    ndkVersion = "28.2.13676358"
     defaultConfig {
         applicationId = "com.samueldev.monitorbateriapro"
         minSdk = 24
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.1.5"
+        versionCode = 8
+        versionName = "1.3.0"
+        externalNativeBuild { cmake { cppFlags += "-std=c++17" } }
     }
     buildFeatures { compose = true }
+    externalNativeBuild { cmake { path = file("src/main/cpp/CMakeLists.txt"); version = "3.22.1" } }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 }
 kotlin {
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-    }
+    compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
 }
 dependencies {
     implementation("androidx.core:core-ktx:1.15.0")
@@ -31,5 +32,6 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("com.android.installreferrer:installreferrer:2.2")
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

@@ -3,4 +3,6 @@
     <string name="widget_circle_description">Widget circular com porcentagem da bateria</string>
     <string name="widget_classic_description">Widget clássico com nível e barra de bateria</string>
     <string name="widget_minimal_description">Widget minimalista com porcentagem da bateria</string>
+    <string name="widget_temperature_description">Widget com temperatura da bateria</string>
+    <string name="widget_screen_time_description">Widget de consulta de tempo de tela</string>
 </resources>

@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import android.provider.Settings
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -52,6 +54,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun openOverlaySettings() {
+        if (Settings.canDrawOverlays(this)) {
+            val intent = Intent(this, OverlayMonitorService::class.java)
+            if (android.os.Build.VERSION.SDK_INT >= 26) startForegroundService(intent) else startService(intent)
+        } else {
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+        }
+    }
+
     private fun startBatteryMonitorService() {
         val intent = Intent(this, BatteryMonitorService::class.java)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) startForegroundService(intent)
@@ -67,12 +78,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        InstallReferrerTracker.collectOnce(this)
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         startBatteryMonitorWhenAllowed()
         setContent {
             var readings by remember { mutableStateOf(BatteryReadings()) }
             var showWidgetHelp by remember { mutableStateOf(false) }
-            var showWifiHelp by remember { mutableStateOf(false) }
             var alertThreshold by remember { mutableIntStateOf(getSharedPreferences("battery_alerts", MODE_PRIVATE).getInt("threshold", 20).coerceIn(5, 95)) }
             LaunchedEffect(Unit) {
                 while (true) {
@@ -84,7 +95,7 @@ class MainActivity : ComponentActivity() {
             BatteryDashboard(readings, alertThreshold, onThresholdChange = { value ->
                 alertThreshold = value
                 getSharedPreferences("battery_alerts", MODE_PRIVATE).edit().putInt("threshold", value).apply()
-            }, onOpenWidgets = { showWidgetHelp = true }, onOpenWifi = { startActivity(Intent(this@MainActivity, WifiScanActivity::class.java)) })
+            }, onOpenWidgets = { showWidgetHelp = true }, onOpenOverlay = { openOverlaySettings() })
             if (showWidgetHelp) {
                 AlertDialog(
                     onDismissRequest = { showWidgetHelp = false },
@@ -147,7 +158,7 @@ private fun readBattery(context: Context, intent: Intent?): BatteryReadings {
 }
 
 @Composable
-private fun BatteryDashboard(data: BatteryReadings, alertThreshold: Int, onThresholdChange: (Int) -> Unit, onOpenWidgets: () -> Unit, onOpenWifi: () -> Unit) {
+private fun BatteryDashboard(data: BatteryReadings, alertThreshold: Int, onThresholdChange: (Int) -> Unit, onOpenWidgets: () -> Unit, onOpenOverlay: () -> Unit) {
     MaterialTheme(colorScheme = darkColorScheme(
         background = Background, surface = SurfaceCard, primary = Accent,
         onBackground = White, onSurface = White
@@ -164,7 +175,7 @@ private fun BatteryDashboard(data: BatteryReadings, alertThreshold: Int, onThres
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text("MONITOR DE BATERIA", color = White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = 0.5.sp)
-                        Text("PRO • 1.1.0", color = Muted, fontSize = 9.sp, letterSpacing = 1.sp)
+                        Text("PRO • 1.3.0", color = Muted, fontSize = 9.sp, letterSpacing = 1.sp)
                     }
                     TextButton(onClick = onOpenWidgets, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
                         Text("Widgets", color = Accent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -201,7 +212,7 @@ private fun BatteryDashboard(data: BatteryReadings, alertThreshold: Int, onThres
                         }
                     }
                     Spacer(Modifier.height(14.dp))
-                    OutlinedButton(onClick = onOpenWifi, modifier = Modifier.fillMaxWidth()) { Text("Procurar redes Wi-Fi próximas") }
+                    OutlinedButton(onClick = onOpenOverlay, modifier = Modifier.fillMaxWidth()) { Text("Central de monitoramento flutuante") }
                     Spacer(Modifier.height(20.dp))
                     SectionHeader("MEDIÇÕES EM TEMPO REAL", "Atualização a cada 1 segundo")
                     Spacer(Modifier.height(10.dp))

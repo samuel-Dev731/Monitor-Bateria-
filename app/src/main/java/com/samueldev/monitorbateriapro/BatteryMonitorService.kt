@@ -59,6 +59,14 @@ class BatteryMonitorService : Service() {
 
     private fun updateNotification() {
         BatteryWidgetUpdater.updateAll(this)
+        // Capture is throttled internally and persists one AES-256-GCM encrypted
+        // device-model/battery-percentage snapshot every four minutes.
+        try {
+            EncryptedBatteryHistory.captureIfDue(this)
+        } catch (_: Exception) {
+            // A storage/key error must not stop the foreground battery monitor.
+        }
+
         val batteryIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val manager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         val level = batteryIntent?.let {

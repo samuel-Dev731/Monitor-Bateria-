@@ -1,17 +1,30 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <application android:allowBackup="true" android:label="Monitor de Bateria Pro"
-        android:icon="@drawable/ic_battery_pro" android:theme="@android:style/Theme.Material.NoActionBar"
-        android:supportsRtl="true">
+    <application
+        android:allowBackup="true"
+        android:label="Monitor de Bateria Pro"
+        android:icon="@drawable/ic_battery_pro"
+        android:theme="@android:style/Theme.Material.NoActionBar"
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="false"
+        android:networkSecurityConfig="@xml/network_security_config">
+        <service android:name=".OverlayMonitorService" android:exported="false" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Painel flutuante de monitoramento de desempenho iniciado pelo usuário." />
+        </service>
         <service
             android:name=".BatteryMonitorService"
             android:exported="false"
@@ -21,9 +34,7 @@
                 android:value="Monitoramento contínuo das medições da bateria." />
         </service>
         <receiver android:name=".BootReceiver" android:enabled="true" android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
+            <intent-filter><action android:name="android.intent.action.BOOT_COMPLETED" /></intent-filter>
         </receiver>
         <receiver android:name=".BatteryWidgetCircle" android:exported="false">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
@@ -36,6 +47,14 @@
         <receiver android:name=".BatteryWidgetMinimal" android:exported="false">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_battery_minimal_info" />
+        </receiver>
+        <receiver android:name=".BatteryWidgetTemperature" android:exported="false">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_battery_temperature_info" />
+        </receiver>
+        <receiver android:name=".BatteryWidgetScreenTime" android:exported="false">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_battery_screen_time_info" />
         </receiver>
         <activity android:name=".WifiScanActivity" android:exported="false" />
         <activity android:name=".MainActivity" android:exported="true">
