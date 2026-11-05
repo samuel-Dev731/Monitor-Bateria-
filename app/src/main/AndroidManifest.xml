@@ -17,7 +17,8 @@
     <application
         android:allowBackup="true"
         android:label="Monitor de Bateria Pro"
-        android:icon="@drawable/ic_battery_pro"
+        android:icon="@drawable/ic_battery_pro_square"
+        android:roundIcon="@drawable/ic_battery_pro_round"
         android:theme="@android:style/Theme.Material.NoActionBar"
         android:supportsRtl="true"
         android:usesCleartextTraffic="false"
@@ -25,13 +26,8 @@
         <service android:name=".OverlayMonitorService" android:exported="false" android:foregroundServiceType="specialUse">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Painel flutuante de monitoramento de desempenho iniciado pelo usuário." />
         </service>
-        <service
-            android:name=".BatteryMonitorService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Monitoramento contínuo das medições da bateria." />
+        <service android:name=".BatteryMonitorService" android:exported="false" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Monitoramento contínuo das medições da bateria." />
         </service>
         <receiver android:name=".BootReceiver" android:enabled="true" android:exported="false">
             <intent-filter><action android:name="android.intent.action.BOOT_COMPLETED" /></intent-filter>
